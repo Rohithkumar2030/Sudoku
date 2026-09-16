@@ -1,0 +1,14 @@
+{
+  "name": "sudoku-validator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Full-stack Sudoku Validator with React + Vite, Node.js + Express, SQLite and Prisma ORM",
+  "scripts": {
+    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "prisma:push": "npm --prefix backend run prisma:push",
+    "test:backend": "node backend/test-validator.js"
+  },
+  "keywords": ["sudoku", "react", "vite", "express", "prisma", "sqlite"]
+}

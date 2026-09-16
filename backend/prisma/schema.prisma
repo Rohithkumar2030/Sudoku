@@ -1,0 +1,16 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model ValidationHistory {
+  id        Int      @id @default(autoincrement())
+  board     String   // 9x9 board stored as JSON string
+  isValid   Boolean
+  message   String?
+  createdAt DateTime @default(now())
+}
