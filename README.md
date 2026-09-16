@@ -1,40 +1,45 @@
-# Full-Stack Sudoku Validator
+# Sudoku Validator
 
-A clean, modern, full-stack Sudoku validator application built for a coding assignment task.
+A clean, full-stack Sudoku validator web application. Built with React and Vite on the frontend, Node.js and Express on the backend, and SQLite with Prisma ORM for data storage.
 
-## Tech Stack
-
-- **Frontend**: React 18, Vite, Lucide React, Modern CSS (Responsive, CSS Grid, Custom Design)
-- **Backend**: Node.js, Express.js (ES Modules, CORS, JSON middleware)
-- **Database**: SQLite
-- **ORM**: Prisma ORM
+It allows you to enter numbers on a 9x9 grid, validates the board against standard Sudoku rules, highlights any conflicts, and keeps a persistent history of previous checks in an SQLite database.
 
 ---
 
-## Features
+## Screenshots
 
-1. **Clean 9x9 Sudoku Grid**:
-   - Visual 3x3 block subgrid boundaries.
-   - Enter digits `1` to `9`, or clear with `Backspace`, `Delete`, or `0`.
-   - Smooth arrow-key navigation (`↑`, `↓`, `←`, `→`) across the board.
-   - Auto-advance cursor to the next cell upon entering a valid digit.
+### Valid Board
+When all filled numbers satisfy row, column, and 3×3 grid rules:
 
-2. **Sudoku Rule Validation**:
-   - Checks every filled cell is an integer `1–9`.
-   - Validates that no duplicates exist in any row.
-   - Validates that no duplicates exist in any column.
-   - Validates that no duplicates exist in any 3x3 subgrid.
-   - Highlights conflicting cells on the grid in red with a soft pulse for easy debugging.
+![Valid Board](assets/valid-board.png)
 
-3. **Persistent SQLite Database via Prisma**:
-   - Automatically stores the board state, `isValid` boolean flag, diagnostic message, and timestamp on every validation.
-   - Validation records persist across server restarts in `backend/prisma/dev.db`.
+### Conflict Highlighting (Invalid Board)
+If there are duplicate values, the app flags the rule violation and highlights the conflicting cells in red:
 
-4. **Validation History**:
-   - Loaded from the backend (`GET /api/history`) upon initial page load.
-   - Displays history cards with status tags (`VALID` / `INVALID`), formatted timestamps, and diagnostic messages.
-   - **Inspect Board** feature: Click on any past history item to reload that board state onto the grid.
-   - **Clear History** feature to reset past records.
+![Invalid Board with Conflicts](assets/invalid-board.png)
+
+---
+
+## What It Does
+
+- **Interactive 9×9 Grid**: Type numbers `1` through `9`, clear with `Backspace`, `Delete`, or `0`, and move around with arrow keys (`↑`, `↓`, `←`, `→`). Cells automatically advance as you type.
+- **Rule Validation**: The backend checks:
+  - All filled cells contain integers from 1 to 9 (blank cells are allowed).
+  - No duplicate numbers in any row.
+  - No duplicate numbers in any column.
+  - No duplicate numbers in any of the nine 3×3 subgrids.
+- **Visual Conflict Feedback**: Any violating cells light up in red so you can easily spot where the collision happened.
+- **Validation History**: Every validation check is automatically saved with its timestamp, status, and board state into SQLite via Prisma.
+- **Board Reloading**: You can click **Load Board** on any history entry to restore that exact board state back onto the grid.
+
+---
+
+## Tech Stack
+
+- **Frontend**: React 18, Vite, Lucide Icons, Vanilla CSS
+- **Backend**: Node.js, Express (ES modules, CORS, JSON middleware)
+- **Database**: SQLite
+- **ORM**: Prisma
 
 ---
 
@@ -42,27 +47,29 @@ A clean, modern, full-stack Sudoku validator application built for a coding assi
 
 ```
 Sudoku/
+├── assets/
+│   ├── valid-board.png        # Screenshot of valid state
+│   └── invalid-board.png      # Screenshot of conflict state
 ├── backend/
 │   ├── prisma/
-│   │   ├── schema.prisma      # Prisma schema (SQLite datasource & ValidationHistory model)
-│   │   └── dev.db             # SQLite database file
+│   │   ├── schema.prisma      # Prisma schema (ValidationHistory model)
+│   │   └── dev.db             # Local SQLite database
 │   ├── src/
-│   │   ├── validator.js       # Pure Sudoku validator function
-│   │   └── server.js          # Express server with REST API endpoints
-│   ├── test-validator.js      # Unit tests for validation logic
-│   ├── .env                   # Database URL and PORT configuration
+│   │   ├── validator.js       # Pure Sudoku validation logic
+│   │   └── server.js          # Express API server
+│   ├── test-validator.js      # Unit tests for validation edge cases
+│   ├── .env                   # Port and database URL
 │   └── package.json
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── SudokuGrid.jsx       # 9x9 interactive board component
-│   │   │   ├── ValidationBanner.jsx # Result banner component
-│   │   │   └── HistoryList.jsx      # Validation history list (sidebar)
-│   │   ├── App.jsx                  # Main application state & API integration
-│   │   ├── App.css                  # Modern, clean responsive styling
+│   │   │   ├── SudokuGrid.jsx       # 9×9 interactive grid
+│   │   │   ├── HistoryList.jsx      # Validation history sidebar
+│   │   │   └── ValidationBanner.jsx # Status banner
+│   │   ├── App.jsx                  # Main application state & API calls
+│   │   ├── App.css                  # Custom styling & responsive layout
 │   │   └── main.jsx
-│   ├── index.html
-│   ├── vite.config.js               # Vite config with backend proxy (/api -> :5001)
+│   ├── vite.config.js               # Dev proxy configuration (/api -> 5001)
 │   └── package.json
 ├── package.json               # Root scripts
 └── README.md
@@ -73,18 +80,20 @@ Sudoku/
 ## Getting Started
 
 ### 1. Prerequisites
-- Node.js (v18 or v20+)
+- Node.js (v18+ recommended)
 - npm
 
-### 2. Quick Setup
+### 2. Installation
+Install dependencies for both frontend and backend:
 
-You can install all dependencies from the root directory:
 ```bash
 npm run install:all
 ```
-*(Or navigate to `backend/` and `frontend/` and run `npm install` in each).*
 
-The database schema is already pushed to SQLite, but you can re-run Prisma migration or push at any time:
+*(Or run `npm install` inside both `backend/` and `frontend/` folders).*
+
+The SQLite database (`dev.db`) is already included, but if you ever want to re-sync the schema:
+
 ```bash
 cd backend
 npx prisma db push
@@ -92,31 +101,32 @@ npx prisma db push
 
 ---
 
-## Running the Application
+## Running the App
 
-### Option A: Run Backend and Frontend in separate terminals
+Run the backend and frontend in two separate terminals:
 
 **Terminal 1 (Backend):**
 ```bash
 cd backend
 npm run dev
 ```
-Backend runs at: `http://localhost:5001`
+Server runs on `http://localhost:5001`
 
 **Terminal 2 (Frontend):**
 ```bash
 cd frontend
 npm run dev
 ```
-Frontend runs at: `http://localhost:3000`
+Frontend runs on `http://localhost:3000`
 
-Open your browser at [http://localhost:3000](http://localhost:3000).
+Open **http://localhost:3000** in your browser.
 
 ---
 
-## Running Backend Unit Tests
+## Running Tests
 
-To run the pure validator unit tests verifying all Sudoku rules and edge cases:
+A unit test suite in the backend tests all Sudoku validation rules and edge cases (ragged rows, decimal values, out-of-range numbers, partial boards, empty boards, etc.):
+
 ```bash
 cd backend
 node test-validator.js
@@ -124,11 +134,11 @@ node test-validator.js
 
 ---
 
-## API Endpoints
+## API Reference
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/health` | Server health check |
-| `POST` | `/api/validate` | Validates a 9x9 board and saves history record to SQLite |
-| `GET` | `/api/history` | Fetches validation history records (ordered descending by timestamp) |
-| `DELETE` | `/api/history` | Clears validation history records |
+| `GET` | `/api/health` | Health check endpoint |
+| `POST` | `/api/validate` | Validates a 9×9 board payload and stores the result in SQLite |
+| `GET` | `/api/history` | Retrieves recent validation history records, newest first |
+| `DELETE` | `/api/history` | Clears all validation history records |
