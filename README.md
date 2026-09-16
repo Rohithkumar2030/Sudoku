@@ -34,6 +34,18 @@ If there are duplicate values, the app flags the rule violation and highlights t
 
 ---
 
+## Edge Cases Handled
+
+Here are a few key edge cases I planned for and how they are handled:
+
+- **Empty & Partial Boards**: Blank cells (`0`, `null`, `""`) are treated as valid unassigned slots, so partially completed puzzles can still be validated without false alarms.
+- **Input Sanitization**: Blocked non-numeric keys and values outside `1–9`. Typing `0` or hitting `Backspace`/`Delete` cleanly resets a cell.
+- **Simultaneous Conflicts**: If a digit duplicates across both a row and a 3×3 box, a `Set` deduplicates conflicting coordinates so all collision points highlight at once.
+- **Malformed Payloads**: The validator rejects non-array inputs, uneven/ragged rows, decimals, and negative numbers before running rules.
+- **Safe Persistence**: Stored board states are serialized to JSON in SQLite with fallback parsing (`try/catch`) to keep history working smoothly even if bad data occurs.
+
+---
+
 ## Tech Stack
 
 - **Frontend**: React 18, Vite, Lucide Icons, Vanilla CSS
@@ -52,13 +64,12 @@ Sudoku/
 │   └── invalid-board.png      # Screenshot of conflict state
 ├── backend/
 │   ├── prisma/
-│   │   ├── schema.prisma      # Prisma schema (ValidationHistory model)
-│   │   └── dev.db             # Local SQLite database
+│   │   └── schema.prisma      # Prisma schema (ValidationHistory model)
 │   ├── src/
 │   │   ├── validator.js       # Pure Sudoku validation logic
 │   │   └── server.js          # Express API server
 │   ├── test-validator.js      # Unit tests for validation edge cases
-│   ├── .env                   # Port and database URL
+│   ├── .env.example           # Environment template
 │   └── package.json
 ├── frontend/
 │   ├── src/
