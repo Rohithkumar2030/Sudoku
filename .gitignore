@@ -1,4 +1,22 @@
+# Dependencies
 node_modules/
+
+# Production build outputs
 dist/
+
+# Environment files (ignore secrets, keep example template)
+.env
+.env.local
+.env.*.local
+*.env
+!.env.example
+!*.env.example
+
+# SQLite databases
+*.db
+*.db-journal
+backend/prisma/*.db
+
+# OS / Logs
 .DS_Store
 *.log
