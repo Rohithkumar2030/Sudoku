@@ -20,3 +20,8 @@ backend/prisma/*.db
 # OS / Logs
 .DS_Store
 *.log
+
+# Reports
+SUDOKU_STUDIO_REPORT.md
+*sudoku_studio_report*
+*sudoko_studio_report*

@@ -14,3 +14,19 @@ model ValidationHistory {
   message   String?
   createdAt DateTime @default(now())
 }
+
+model Game {
+  id           String   @id @default(uuid())
+  title        String   @default("Sudoku Puzzle")
+  difficulty   String   @default("medium") // easy, medium, hard, custom
+  initialBoard String   // 9x9 starting numbers JSON string (givens)
+  currentBoard String   // 9x9 current player board JSON string
+  solution     String?  // 9x9 solved board JSON string (for hints / check)
+  status       String   @default("in_progress") // "in_progress", "completed"
+  timeElapsed  Int      @default(0) // seconds
+  movesCount   Int      @default(0)
+  isValid      Boolean  @default(true)
+  isCompleted  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

@@ -1,11 +1,23 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 
 /**
  * 9x9 Sudoku Grid Component
- * Features clean 3x3 box dividers, subtle inner cell lines,
- * keyboard navigation, and conflict highlighting.
+ * Features:
+ * - Clear distinction between starting clues and player entries
+ * - 3x3 box borders and inner cell dividers
+ * - Active cell selection and keyboard navigation
+ * - Peer crosshair highlighting (row, column, 3x3 box)
+ * - Same-number highlighting across the entire grid
+ * - Instant conflict highlighting
  */
-export default function SudokuGrid({ board, onCellChange, conflictCells = [] }) {
+export default function SudokuGrid({
+  board,
+  initialBoard = [],
+  onCellChange,
+  conflictCells = [],
+  selectedCell = null,
+  onSelectCell,
+}) {
   const cellInputRefs = useRef([]);
 
   // Fast coordinate lookup for conflicts: "row,col"
@@ -13,11 +25,37 @@ export default function SudokuGrid({ board, onCellChange, conflictCells = [] }) 
     conflictCells.map((cell) => `${cell.row},${cell.col}`)
   );
 
+  // Determine value of currently selected cell for same-number highlighting
+  const selectedValue =
+    selectedCell &&
+    board[selectedCell.row] &&
+    board[selectedCell.row][selectedCell.col] > 0
+      ? board[selectedCell.row][selectedCell.col]
+      : null;
+
+  // Ensure focus syncs when selectedCell changes programmatically
+  useEffect(() => {
+    if (selectedCell) {
+      const idx = selectedCell.row * 9 + selectedCell.col;
+      cellInputRefs.current[idx]?.focus();
+    }
+  }, [selectedCell]);
+
+  const handleCellClick = (rowIndex, colIndex) => {
+    if (onSelectCell) {
+      onSelectCell(rowIndex, colIndex);
+    }
+  };
+
   const handleKeyDown = (rowIndex, colIndex, event) => {
-    // Clear cell on Backspace, Delete, or 0
+    const isGiven = initialBoard[rowIndex]?.[colIndex] !== 0;
+
+    // Clear cell on Backspace, Delete, or 0 (only if not a starting clue)
     if (event.key === 'Backspace' || event.key === 'Delete' || event.key === '0') {
       event.preventDefault();
-      onCellChange(rowIndex, colIndex, 0);
+      if (!isGiven) {
+        onCellChange(rowIndex, colIndex, 0);
+      }
       return;
     }
 
@@ -32,11 +70,20 @@ export default function SudokuGrid({ board, onCellChange, conflictCells = [] }) 
     else return;
 
     event.preventDefault();
+    if (onSelectCell) {
+      onSelectCell(nextRow, nextCol);
+    }
     const nextIndex = nextRow * 9 + nextCol;
     cellInputRefs.current[nextIndex]?.focus();
   };
 
   const handleInputChange = (rowIndex, colIndex, event) => {
+    const isGiven = initialBoard[rowIndex]?.[colIndex] !== 0;
+    if (isGiven) {
+      // Starting clues cannot be overwritten
+      return;
+    }
+
     const inputValue = event.target.value;
 
     if (!inputValue) {
@@ -55,12 +102,6 @@ export default function SudokuGrid({ board, onCellChange, conflictCells = [] }) 
     // Accept single digit between 1 and 9
     if (/^[1-9]$/.test(lastCharacter)) {
       onCellChange(rowIndex, colIndex, Number(lastCharacter));
-
-      // Auto-advance cursor to next cell
-      const nextIndex = rowIndex * 9 + colIndex + 1;
-      if (nextIndex < 81) {
-        cellInputRefs.current[nextIndex]?.focus();
-      }
     }
   };
 
@@ -70,9 +111,27 @@ export default function SudokuGrid({ board, onCellChange, conflictCells = [] }) 
         {board.map((row, rowIndex) =>
           row.map((cellValue, colIndex) => {
             const cellFlatIndex = rowIndex * 9 + colIndex;
+            const isGiven = initialBoard[rowIndex]?.[colIndex] !== 0;
             const isConflict = conflictCoordinates.has(`${rowIndex},${colIndex}`);
+            const isSelected =
+              selectedCell?.row === rowIndex && selectedCell?.col === colIndex;
 
-            // Right border logic: 3x3 divider vs inner cell line vs outer edge
+            // Peer crosshair highlight (same row, col, or 3x3 box)
+            const isPeer =
+              selectedCell &&
+              !isSelected &&
+              (selectedCell.row === rowIndex ||
+                selectedCell.col === colIndex ||
+                (Math.floor(selectedCell.row / 3) === Math.floor(rowIndex / 3) &&
+                  Math.floor(selectedCell.col / 3) === Math.floor(colIndex / 3)));
+
+            // Same number highlight
+            const isSameNumber =
+              selectedValue !== null &&
+              cellValue === selectedValue &&
+              !isSelected;
+
+            // Border styling
             let rightBorderClass = 'cell-border-right';
             if (colIndex === 2 || colIndex === 5) {
               rightBorderClass = 'subgrid-border-right';
@@ -80,7 +139,6 @@ export default function SudokuGrid({ board, onCellChange, conflictCells = [] }) 
               rightBorderClass = 'no-border-right';
             }
 
-            // Bottom border logic: 3x3 divider vs inner cell line vs outer edge
             let bottomBorderClass = 'cell-border-bottom';
             if (rowIndex === 2 || rowIndex === 5) {
               bottomBorderClass = 'subgrid-border-bottom';
@@ -91,7 +149,12 @@ export default function SudokuGrid({ board, onCellChange, conflictCells = [] }) 
             return (
               <div
                 key={`cell-${rowIndex}-${colIndex}`}
+                onClick={() => handleCellClick(rowIndex, colIndex)}
                 className={`cell-box ${rightBorderClass} ${bottomBorderClass} ${
+                  isGiven ? 'cell-given' : 'cell-user'
+                } ${isSelected ? 'cell-selected' : ''} ${
+                  isPeer ? 'cell-peer' : ''
+                } ${isSameNumber ? 'cell-same-num' : ''} ${
                   isConflict ? 'cell-conflict' : ''
                 }`}
               >
@@ -101,13 +164,17 @@ export default function SudokuGrid({ board, onCellChange, conflictCells = [] }) 
                   inputMode="numeric"
                   pattern="[1-9]*"
                   maxLength={1}
+                  readOnly={isGiven}
                   value={cellValue === 0 ? '' : cellValue}
+                  onFocus={() => handleCellClick(rowIndex, colIndex)}
                   onChange={(event) => handleInputChange(rowIndex, colIndex, event)}
                   onKeyDown={(event) => handleKeyDown(rowIndex, colIndex, event)}
-                  className={`cell-input ${isConflict ? 'input-has-conflict' : ''} ${
-                    cellValue !== 0 ? 'input-has-value' : ''
+                  className={`cell-input ${isGiven ? 'input-given' : 'input-user'} ${
+                    isConflict ? 'input-has-conflict' : ''
+                  } ${cellValue !== 0 ? 'input-has-value' : ''}`}
+                  aria-label={`Row ${rowIndex + 1}, Column ${colIndex + 1}${
+                    isGiven ? ' (Given clue)' : ''
                   }`}
-                  aria-label={`Row ${rowIndex + 1}, Column ${colIndex + 1}`}
                 />
               </div>
             );
